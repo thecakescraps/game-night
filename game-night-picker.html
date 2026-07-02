@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Game Night Picker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1b1410;
+    --bg2:#221a14;
+    --felt:#26392f;
+    --felt-line:#32503f;
+    --card:#f4ece0;
+    --card-edge:#e2d6c4;
+    --ink:#2b211a;
+    --ink-soft:#6f6052;
+    --muted:#ab9d8e;
+    --dim:#7d6f60;
+    --brass:#d9a441;
+    --brass-hi:#ecbb5b;
+    --best:#b5482f;
+    --rec:#3f7d57;
+    --radius:14px;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #2a201a 0%, var(--bg) 55%) fixed,
+      var(--bg);
+    color:#efe6d8;
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 18px 80px;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto}
+
+  /* ---------- header ---------- */
+  header.top{margin-bottom:22px}
+  .eyebrow{
+    font-family:"Space Mono",monospace;
+    font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--brass);margin:0 0 6px;
+  }
+  h1{
+    font-family:"Fraunces",Georgia,serif;
+    font-weight:600;font-size:clamp(34px,6vw,52px);
+    line-height:1.0;margin:0;letter-spacing:-.01em;color:#fbf4e7;
+  }
+  .sub{color:var(--muted);margin:8px 0 0;max-width:60ch;font-size:15px}
+
+  /* ---------- controls (the felt) ---------- */
+  .felt{
+    background:
+      repeating-linear-gradient(135deg, transparent 0 9px, rgba(0,0,0,.04) 9px 10px),
+      var(--felt);
+    border:1px solid var(--felt-line);
+    border-radius:var(--radius);
+    padding:18px 18px 6px;
+    margin:22px 0 26px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 12px 30px rgba(0,0,0,.35);
+  }
+  .grid{
+    display:grid;gap:18px 26px;
+    grid-template-columns:repeat(auto-fit,minmax(225px,1fr));
+  }
+  .ctrl{padding-bottom:14px}
+  .label{
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:#cde0d3;margin-bottom:10px;font-weight:600;
+  }
+  .label .val{
+    font-family:"Space Mono",monospace;letter-spacing:0;text-transform:none;
+    color:var(--brass-hi);font-size:14px;font-weight:700;
+  }
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;gap:0;width:fit-content}
+  .stepper button{
+    width:42px;height:42px;border:1px solid var(--felt-line);
+    background:#1d2a23;color:#eadfce;font-size:22px;line-height:1;
+    cursor:pointer;display:grid;place-items:center;
+  }
+  .stepper button:first-child{border-radius:10px 0 0 10px}
+  .stepper button:last-child{border-radius:0 10px 10px 0}
+  .stepper button:hover{background:#26382e;color:#fff}
+  .stepper .num{
+    width:58px;height:42px;display:grid;place-items:center;
+    background:#13100c;border-top:1px solid var(--felt-line);border-bottom:1px solid var(--felt-line);
+    font-family:"Space Mono",monospace;font-size:20px;font-weight:700;color:#fbf4e7;
+  }
+
+  /* segmented */
+  .seg{display:flex;border:1px solid var(--felt-line);border-radius:10px;overflow:hidden}
+  .seg button{
+    flex:1;padding:10px 6px;border:0;border-right:1px solid var(--felt-line);
+    background:#1d2a23;color:#c7d6cb;cursor:pointer;font-size:12.5px;font-weight:600;
+  }
+  .seg button:last-child{border-right:0}
+  .seg button[aria-pressed="true"]{background:var(--brass);color:#241a07}
+  .seg button:not([aria-pressed="true"]):hover{background:#26382e}
+
+  /* range sliders */
+  .range-row{position:relative;height:36px}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;background:transparent;
+    position:absolute;top:0;left:0;height:36px;margin:0;pointer-events:none;
+  }
+  .track{
+    position:absolute;left:0;right:0;top:16px;height:5px;border-radius:3px;
+    background:#13100c;
+  }
+  .track .fill{position:absolute;top:0;bottom:0;background:var(--brass);border-radius:3px}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+    background:#fbf4e7;border:3px solid var(--brass);cursor:pointer;pointer-events:auto;
+    margin-top:0;box-shadow:0 2px 5px rgba(0,0,0,.4);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:22px;height:22px;border-radius:50%;background:#fbf4e7;border:3px solid var(--brass);
+    cursor:pointer;pointer-events:auto;box-shadow:0 2px 5px rgba(0,0,0,.4);
+  }
+  .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:2px}
+
+  .time-input{display:flex;align-items:center;gap:10px}
+  .time-input input{
+    width:90px;padding:10px 12px;border-radius:10px;border:1px solid var(--felt-line);
+    background:#13100c;color:#fbf4e7;font-family:"Space Mono",monospace;font-size:15px;
+  }
+  .time-input span{font-size:13px;color:var(--muted)}
+  .time-input button{
+    background:none;border:0;color:var(--brass-hi);cursor:pointer;font-size:12.5px;text-decoration:underline;
+  }
+
+  /* action bar */
+  .actions{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+    border-top:1px solid var(--felt-line);margin-top:2px;padding:16px 0 14px;
+  }
+  .btn{
+    font-family:"Inter",sans-serif;font-weight:600;font-size:15px;cursor:pointer;
+    border-radius:11px;padding:13px 22px;border:1px solid transparent;
+  }
+  .btn-primary{background:var(--brass);color:#241a07}
+  .btn-primary:hover{background:var(--brass-hi)}
+  .btn-ghost{background:transparent;border-color:var(--felt-line);color:#eadfce}
+  .btn-ghost:hover{background:#26382e}
+  .matchcount{
+    margin-left:auto;font-family:"Space Mono",monospace;font-size:13px;color:var(--muted);
+  }
+  .matchcount b{color:var(--brass-hi)}
+
+  /* ---------- picks ---------- */
+  .section-h{
+    display:flex;align-items:baseline;gap:12px;margin:30px 0 14px;
+  }
+  .section-h h2{
+    font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:24px;margin:0;color:#fbf4e7;
+  }
+  .section-h .hint{font-size:13px;color:var(--dim)}
+
+  .picks{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .gcard{
+    background:var(--card);color:var(--ink);border-radius:var(--radius);
+    border:1px solid var(--card-edge);padding:18px 18px 16px;position:relative;
+    box-shadow:0 14px 30px rgba(0,0,0,.4);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .gcard.picked{
+    outline:3px solid var(--brass);outline-offset:2px;transform:translateY(-4px);
+    box-shadow:0 22px 44px rgba(0,0,0,.55);
+  }
+  .gcard.flash{outline:3px solid var(--brass-hi);outline-offset:2px}
+  .gtitle{
+    font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:21px;line-height:1.12;
+    margin:0 0 4px;color:#231a13;
+  }
+  .why{
+    display:inline-block;font-size:12px;font-weight:600;color:#5a3a1a;
+    background:#f0dcb6;border:1px solid #e6cd9a;border-radius:999px;
+    padding:3px 10px;margin:2px 0 14px;
+  }
+  .stat-row{
+    display:flex;flex-wrap:wrap;gap:6px 16px;font-family:"Space Mono",monospace;
+    font-size:13px;color:var(--ink);border-top:1px dashed var(--card-edge);padding-top:12px;
+  }
+  .stat-row .k{color:var(--ink-soft)}
+  .meter-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:14px 0 6px}
+  .cubes{display:flex;gap:5px;align-items:center}
+  .cube{width:16px;height:16px;border-radius:3px;background:#e0d4c1;border:1px solid #cdbfa8}
+  .cube.on{background:var(--ink);border-color:var(--ink)}
+  .cube.half{background:linear-gradient(90deg,var(--ink) 0 50%,#e0d4c1 50% 100%);border-color:var(--ink)}
+  .cubes .wnum{font-family:"Space Mono",monospace;font-size:13px;color:var(--ink-soft);margin-left:6px}
+  .seats{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:4px}
+  .seat{
+    width:26px;height:26px;border-radius:7px;display:grid;place-items:center;
+    font-family:"Space Mono",monospace;font-size:12px;font-weight:700;
+    background:#ece0cd;color:#8a7a64;border:1px solid #ddcdb4;
+  }
+  .seat.rec{background:#dff0e4;color:var(--rec);border-color:#bfe0ca}
+  .seat.best{background:#fadfd6;color:var(--best);border-color:#f0c3b6}
+  .seat.sel{outline:2px solid var(--ink);outline-offset:1px}
+  .seat-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin-top:9px}
+  .seat-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+  .empty{
+    background:var(--bg2);border:1px dashed var(--felt-line);border-radius:var(--radius);
+    padding:30px;text-align:center;color:var(--muted);
+  }
+  .empty b{color:#fbf4e7}
+
+  /* ---------- full list ---------- */
+  .list-wrap{margin-top:14px;border:1px solid #2c241c;border-radius:var(--radius);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{
+    text-align:left;background:#241c15;color:#cdbfa8;font-weight:600;
+    padding:11px 12px;font-size:12px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;
+    border-bottom:1px solid #2c241c;user-select:none;
+  }
+  thead th .arrow{color:var(--brass);font-size:10px}
+  thead th.num,tbody td.num{text-align:right;font-family:"Space Mono",monospace}
+  tbody td{padding:10px 12px;border-bottom:1px solid #211a14;color:#e7ddcd}
+  tbody tr:nth-child(even){background:#1f1810}
+  tbody tr:hover{background:#2a2118}
+  td.name{font-weight:500;color:#fbf4e7}
+  .fit-tag{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-left:7px;vertical-align:1px}
+  .fit-tag.best{background:rgba(181,72,47,.22);color:#f0a48f}
+  .fit-tag.rec{background:rgba(63,125,87,.22);color:#9fd9b4}
+  .fit-tag.coop{background:rgba(63,125,87,.28);color:#a9e0bd}
+  .fit-tag.legacy{background:rgba(150,110,190,.26);color:#cdb0e6}
+  .coop-pill{
+    font-family:"Inter",sans-serif;font-size:11px;font-weight:600;vertical-align:3px;
+    color:var(--rec);background:#dff0e4;border:1px solid #bfe0ca;border-radius:999px;
+    padding:2px 9px;margin-left:8px;white-space:nowrap;
+  }
+  .legacy-pill{
+    font-family:"Inter",sans-serif;font-size:11px;font-weight:600;vertical-align:3px;
+    color:#6a4c8c;background:#ece3f4;border:1px solid #dcc9ec;border-radius:999px;
+    padding:2px 9px;margin-left:8px;white-space:nowrap;
+  }
+
+  footer{margin-top:34px;color:var(--dim);font-size:12.5px;text-align:center}
+  footer code{font-family:"Space Mono",monospace;color:var(--muted)}
+
+  @media (max-width:560px){
+    body{padding:18px 12px 70px}
+    .actions .btn{flex:1}
+    .matchcount{margin-left:0;width:100%;order:-1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Tabletop &middot; Pick &amp; play</p>
+    <h1>Game Night Picker</h1>
+    <p class="sub" id="subline">Loading your shelf&hellip;</p>
+  </header>
+
+  <section class="felt" aria-label="Filters">
+    <div class="grid">
+      <!-- players -->
+      <div class="ctrl">
+        <div class="label">Players<span class="val" id="playersVal">2</span></div>
+        <div class="stepper">
+          <button id="pMinus" aria-label="Fewer players">&minus;</button>
+          <div class="num" id="playersNum">2</div>
+          <button id="pPlus" aria-label="More players">&plus;</button>
+        </div>
+      </div>
+
+      <!-- fit -->
+      <div class="ctrl">
+        <div class="label">Player-count fit</div>
+        <div class="seg" id="fitSeg" role="group" aria-label="Player count fit">
+          <button data-fit="any" aria-pressed="true">Any that seat it</button>
+          <button data-fit="rec" aria-pressed="false">Recommended</button>
+          <button data-fit="best" aria-pressed="false">Best</button>
+        </div>
+      </div>
+
+      <!-- complexity -->
+      <div class="ctrl">
+        <div class="label">Complexity<span class="val" id="wVal">1.0 &ndash; 5.0</span></div>
+        <div class="range-row">
+          <div class="track"><div class="fill" id="wFill"></div></div>
+          <input type="range" id="wMin" min="1" max="5" step="0.1" value="1">
+          <input type="range" id="wMax" min="1" max="5" step="0.1" value="5">
+        </div>
+        <div class="scale"><span>Light</span><span>Medium</span><span>Heavy</span></div>
+      </div>
+
+      <!-- bgg rating -->
+      <div class="ctrl">
+        <div class="label">Min BGG rating<span class="val" id="rVal">Any</span></div>
+        <div class="range-row">
+          <div class="track"><div class="fill" id="rFill"></div></div>
+          <input type="range" id="rMin" min="0" max="9" step="0.1" value="0">
+        </div>
+        <div class="scale"><span>Any</span><span>7.0</span><span>9.0</span></div>
+      </div>
+
+      <!-- max time -->
+      <div class="ctrl">
+        <div class="label">Max play time</div>
+        <div class="time-input">
+          <input type="number" id="maxTime" min="0" step="5" placeholder="any" inputmode="numeric">
+          <span>min</span>
+          <button id="timeClear" type="button">clear</button>
+        </div>
+      </div>
+
+      <!-- played -->
+      <div class="ctrl">
+        <div class="label">Played status</div>
+        <div class="seg" id="playedSeg" role="group" aria-label="Played status">
+          <button data-played="either" aria-pressed="true">Either</button>
+          <button data-played="unplayed" aria-pressed="false">Unplayed</button>
+          <button data-played="played" aria-pressed="false">Played</button>
+        </div>
+      </div>
+
+      <!-- co-op -->
+      <div class="ctrl">
+        <div class="label">Style</div>
+        <div class="seg" id="coopSeg" role="group" aria-label="Cooperative or competitive">
+          <button data-coop="either" aria-pressed="true">Either</button>
+          <button data-coop="coop" aria-pressed="false">Co-op</button>
+          <button data-coop="comp" aria-pressed="false">Competitive</button>
+        </div>
+      </div>
+
+      <!-- legacy / campaign -->
+      <div class="ctrl">
+        <div class="label">Legacy / campaign</div>
+        <div class="seg" id="legacySeg" role="group" aria-label="Legacy or campaign games">
+          <button data-legacy="either" aria-pressed="true">Either</button>
+          <button data-legacy="only" aria-pressed="false">Only</button>
+          <button data-legacy="hide" aria-pressed="false">Hide</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="rollBtn">Deal tonight&rsquo;s picks</button>
+      <button class="btn btn-ghost" id="pickOneBtn">Pick one for us</button>
+      <div class="matchcount" id="matchCount"></div>
+    </div>
+  </section>
+
+  <div class="section-h">
+    <h2>Tonight&rsquo;s picks</h2>
+    <span class="hint">weighted toward games that shine at your count</span>
+  </div>
+  <div id="picks" class="picks"></div>
+
+  <div class="section-h">
+    <h2>Everything that fits</h2>
+    <span class="hint" id="listHint"></span>
+  </div>
+  <div class="list-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="n">Game</th>
+          <th data-sort="players" class="num">Players</th>
+          <th data-sort="t" class="num">Time</th>
+          <th data-sort="w" class="num">Weight</th>
+          <th data-sort="r" class="num">BGG</th>
+          <th data-sort="rk" class="num">Rank</th>
+          <th data-sort="p" class="num">Plays</th>
+        </tr>
+      </thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span id="footStat"></span> &middot; Your collection is embedded in this file, runs entirely in your browser, and is sent nowhere. <br>
+    Built from your BGG export &middot; <code>collection.csv</code>
+  </footer>
+</div>
+
+<script>
+const GAMES = [{"n":"7 Wonders","mn":2,"mx":7,"t":30,"w":2.31,"r":7.7,"rk":118,"p":0,"best":[4,5],"rec":[3,4,5,6,7],"c":0,"l":0},{"n":"7 Wonders Duel","mn":2,"mx":2,"t":30,"w":2.23,"r":8.1,"rk":24,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"A Game of Thrones: B'Twixt","mn":3,"mx":6,"t":90,"w":2.17,"r":7.1,"rk":4385,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"A Gentle Rain","mn":1,"mx":1,"t":15,"w":1.11,"r":7.6,"rk":994,"p":0,"best":[1],"rec":[1],"c":0,"l":0},{"n":"Above and Below","mn":2,"mx":4,"t":90,"w":2.51,"r":7.3,"rk":429,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Above and Below: Haunted","mn":2,"mx":4,"t":120,"w":2.75,"r":8.0,"rk":3480,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Acquire","mn":2,"mx":6,"t":90,"w":2.49,"r":7.4,"rk":364,"p":1,"best":[4],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Aeon's End: Legacy of Gravehold","mn":1,"mx":4,"t":60,"w":3.38,"r":8.0,"rk":2381,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Aftermath","mn":1,"mx":4,"t":120,"w":2.87,"r":7.4,"rk":1683,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Age of Steam","mn":1,"mx":6,"t":120,"w":3.85,"r":7.9,"rk":138,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Airlines Europe","mn":2,"mx":5,"t":75,"w":2.43,"r":7.3,"rk":684,"p":0,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Alchemists","mn":2,"mx":4,"t":120,"w":3.92,"r":7.6,"rk":179,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"An Age Contrived","mn":1,"mx":5,"t":120,"w":3.5,"r":6.8,"rk":5415,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Anarchy Pancakes","mn":2,"mx":6,"t":5,"w":1.0,"r":5.6,"rk":26749,"p":0,"best":[3,4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Apples to Apples","mn":4,"mx":10,"t":30,"w":1.15,"r":5.7,"rk":8231,"p":0,"best":[6,7,8],"rec":[4,5,6,7,8,9,10],"c":0,"l":0},{"n":"Aquatica","mn":1,"mx":4,"t":60,"w":2.32,"r":7.4,"rk":579,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Artisans of Splendent Vale","mn":2,"mx":4,"t":1200,"w":2.56,"r":7.7,"rk":4689,"p":0,"best":[4],"rec":[2,3,4],"c":1,"l":1},{"n":"Arydia: The Paths We Dare Tread","mn":1,"mx":4,"t":240,"w":3.3,"r":9.0,"rk":407,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Atlantis Rising (Second Edition)","mn":1,"mx":7,"t":120,"w":2.47,"r":7.5,"rk":686,"p":0,"best":[4],"rec":[1,2,3,4,5,6],"c":1,"l":0},{"n":"Automobile","mn":3,"mx":5,"t":120,"w":3.52,"r":7.3,"rk":754,"p":0,"best":[5],"rec":[3,4,5],"c":0,"l":0},{"n":"BANG! The Bullet!","mn":3,"mx":8,"t":40,"w":1.85,"r":6.9,"rk":0,"p":8,"best":[6,7],"rec":[4,5,6,7,8],"c":0,"l":0},{"n":"Bargain Basement Bathysphere","mn":1,"mx":1,"t":15,"w":2.23,"r":7.2,"rk":4014,"p":0,"best":[1],"rec":[1],"c":0,"l":0},{"n":"Battle Masters","mn":2,"mx":2,"t":60,"w":1.87,"r":6.4,"rk":4131,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Beer & Bread","mn":2,"mx":2,"t":45,"w":2.35,"r":7.3,"rk":735,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Blokus Trigon","mn":2,"mx":4,"t":20,"w":1.92,"r":6.9,"rk":1900,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Books of Time","mn":1,"mx":4,"t":60,"w":2.62,"r":7.1,"rk":2672,"p":0,"best":[2],"rec":[1,2,3],"c":0,"l":1},{"n":"Boss Monster: The Dungeon Building Card Game","mn":2,"mx":4,"t":30,"w":1.85,"r":6.3,"rk":2769,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Brass: Birmingham","mn":2,"mx":4,"t":120,"w":3.86,"r":8.6,"rk":1,"p":5,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Bruxelles 1893: Belle Époque","mn":2,"mx":5,"t":120,"w":3.33,"r":7.9,"rk":2026,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Bärenpark","mn":2,"mx":4,"t":45,"w":1.66,"r":7.3,"rk":426,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Canopy: Evergreen","mn":1,"mx":4,"t":60,"w":2.31,"r":7.3,"rk":4926,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Captain Sonar","mn":2,"mx":8,"t":60,"w":2.21,"r":7.5,"rk":248,"p":0,"best":[8],"rec":[6,7,8],"c":0,"l":0},{"n":"Carcassonne","mn":2,"mx":5,"t":45,"w":1.88,"r":7.4,"rk":239,"p":2,"best":[2],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Cardline: Animals","mn":2,"mx":8,"t":15,"w":1.12,"r":6.5,"rk":3179,"p":6,"best":[4],"rec":[2,3,4,5,6,7],"c":0,"l":0},{"n":"Cards Against Humanity","mn":4,"mx":30,"t":30,"w":1.17,"r":5.7,"rk":16376,"p":0,"best":[6,7,8],"rec":[4,5,6,7,8,9,10],"c":0,"l":0},{"n":"Carpe Diem","mn":2,"mx":4,"t":75,"w":2.54,"r":7.5,"rk":454,"p":2,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Cartographers","mn":1,"mx":100,"t":45,"w":1.89,"r":7.6,"rk":184,"p":0,"best":[3,4],"rec":[1,2,3,4,5,6,7,8],"c":0,"l":0},{"n":"Cascadia","mn":1,"mx":4,"t":45,"w":1.84,"r":7.9,"rk":60,"p":2,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Cascadia: Rolling Rivers","mn":1,"mx":4,"t":30,"w":1.96,"r":7.2,"rk":2523,"p":0,"best":[1,2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Casting Shadows","mn":2,"mx":4,"t":60,"w":2.24,"r":6.3,"rk":5713,"p":0,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Catan","mn":3,"mx":4,"t":120,"w":2.28,"r":7.1,"rk":621,"p":2,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Caverna: Cave vs Cave – The Big Box","mn":1,"mx":2,"t":40,"w":2.68,"r":7.4,"rk":0,"p":0,"best":[2],"rec":[1,2],"c":0,"l":0},{"n":"Caylus 1303","mn":2,"mx":5,"t":90,"w":2.88,"r":7.4,"rk":1014,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Ceres","mn":1,"mx":4,"t":120,"w":3.22,"r":7.6,"rk":2751,"p":2,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Charterstone","mn":1,"mx":6,"t":75,"w":2.86,"r":7.2,"rk":642,"p":0,"best":[6],"rec":[2,3,4,5,6],"c":0,"l":1},{"n":"Chez Greek","mn":2,"mx":6,"t":60,"w":1.46,"r":5.9,"rk":12404,"p":0,"best":[4],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Chronicles of Avel","mn":1,"mx":4,"t":60,"w":1.94,"r":7.5,"rk":1210,"p":0,"best":[3,4],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Chronicles of Crime: 1400","mn":1,"mx":4,"t":90,"w":1.99,"r":7.7,"rk":804,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":1},{"n":"Clank! In! Space!: A Deck-Building Adventure","mn":2,"mx":4,"t":90,"w":2.57,"r":7.8,"rk":162,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Clank! Legacy 2: Acquisitions Incorporated – Darkest Magic","mn":2,"mx":4,"t":120,"w":2.75,"r":8.5,"rk":1513,"p":3,"best":[4],"rec":[2,3,4],"c":0,"l":1},{"n":"Clank! Legacy: Acquisitions Incorporated","mn":2,"mx":4,"t":120,"w":2.74,"r":8.5,"rk":28,"p":4,"best":[4],"rec":[2,3,4],"c":0,"l":1},{"n":"Clank!: Catacombs","mn":2,"mx":4,"t":90,"w":2.49,"r":8.2,"rk":49,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Clans of Caledonia","mn":1,"mx":4,"t":120,"w":3.47,"r":7.9,"rk":78,"p":3,"best":[4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Codenames: Duet","mn":2,"mx":2,"t":30,"w":1.36,"r":7.4,"rk":275,"p":0,"best":[2],"rec":[2],"c":1,"l":0},{"n":"Coimbra","mn":2,"mx":4,"t":90,"w":3.24,"r":7.6,"rk":263,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Comic Hunters","mn":1,"mx":4,"t":60,"w":2.22,"r":7.6,"rk":1201,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Command of Nature","mn":2,"mx":4,"t":60,"w":2.39,"r":6.9,"rk":4404,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Cooper Island","mn":1,"mx":4,"t":120,"w":4.16,"r":7.5,"rk":730,"p":1,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Cozy Stickerville","mn":1,"mx":6,"t":30,"w":1.2,"r":8.3,"rk":810,"p":9,"best":[2],"rec":[1,2,3],"c":0,"l":0},{"n":"Crackers in My Bed","mn":2,"mx":4,"t":20,"w":1.0,"r":4.4,"rk":0,"p":0,"best":[],"rec":[],"c":0,"l":0},{"n":"Cranium","mn":4,"mx":99,"t":60,"w":1.42,"r":5.7,"rk":11101,"p":0,"best":[8],"rec":[4,5,6,7,8,9,10,11,12,14,16],"c":0,"l":0},{"n":"Critter Kitchen","mn":1,"mx":5,"t":60,"w":2.44,"r":7.8,"rk":871,"p":0,"best":[4],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Deep Sea Adventure","mn":2,"mx":6,"t":30,"w":1.18,"r":6.9,"rk":940,"p":5,"best":[4],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Descent: Journeys in the Dark (Second Edition)","mn":1,"mx":5,"t":120,"w":3.22,"r":7.6,"rk":230,"p":0,"best":[5],"rec":[2,3,4,5],"c":0,"l":1},{"n":"Dinosaur Island: Rawr 'n Write","mn":1,"mx":4,"t":45,"w":2.86,"r":7.7,"rk":630,"p":2,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Distilled","mn":1,"mx":5,"t":150,"w":3.03,"r":7.8,"rk":276,"p":1,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Divinus: Chest of Plenty","mn":2,"mx":4,"t":60,"w":0.0,"r":7.0,"rk":0,"p":0,"best":[],"rec":[],"c":0,"l":1},{"n":"Dominare","mn":2,"mx":6,"t":120,"w":3.48,"r":6.8,"rk":4283,"p":0,"best":[4],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Dominion","mn":2,"mx":4,"t":30,"w":2.34,"r":7.6,"rk":146,"p":3,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Don't Break the Ice","mn":2,"mx":4,"t":20,"w":1.12,"r":4.8,"rk":30813,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Dorfromantik: The Board Game","mn":1,"mx":6,"t":60,"w":1.64,"r":7.6,"rk":325,"p":0,"best":[1,2],"rec":[1,2,3],"c":1,"l":0},{"n":"Dragon Strike","mn":2,"mx":6,"t":60,"w":2.31,"r":6.4,"rk":7221,"p":1,"best":[4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Dragonkeepers","mn":2,"mx":4,"t":20,"w":1.96,"r":7.1,"rk":2205,"p":0,"best":[3],"rec":[2,3,4],"c":1,"l":0},{"n":"Dune: Imperium","mn":1,"mx":4,"t":120,"w":3.08,"r":8.4,"rk":6,"p":0,"best":[3,4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Dwellings of Eldervale","mn":1,"mx":5,"t":150,"w":3.24,"r":8.1,"rk":128,"p":0,"best":[3],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Earth","mn":1,"mx":5,"t":90,"w":2.91,"r":7.6,"rk":210,"p":0,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Egizia","mn":2,"mx":4,"t":90,"w":2.83,"r":7.4,"rk":743,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Eila and Something Shiny","mn":1,"mx":1,"t":45,"w":2.01,"r":7.9,"rk":1089,"p":0,"best":[1],"rec":[1],"c":1,"l":1},{"n":"El Grande","mn":2,"mx":5,"t":120,"w":2.93,"r":7.8,"rk":102,"p":2,"best":[5],"rec":[3,4,5],"c":0,"l":0},{"n":"Emerge","mn":2,"mx":4,"t":75,"w":2.13,"r":6.8,"rk":5494,"p":2,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Empire Builder","mn":2,"mx":6,"t":180,"w":2.63,"r":7.0,"rk":1978,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Encyclopedia","mn":1,"mx":4,"t":120,"w":3.05,"r":7.3,"rk":1341,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Endangered","mn":1,"mx":5,"t":90,"w":2.52,"r":7.4,"rk":1745,"p":0,"best":[3],"rec":[1,2,3,4],"c":1,"l":0},{"n":"Endless Winter: Paleoamericans","mn":1,"mx":4,"t":120,"w":3.33,"r":7.6,"rk":343,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Everdell: Collector's Edition","mn":1,"mx":4,"t":80,"w":2.86,"r":8.5,"rk":0,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Everstone: Discovering Ignis","mn":1,"mx":4,"t":120,"w":2.93,"r":7.4,"rk":7667,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Executive Decision","mn":2,"mx":6,"t":90,"w":2.3,"r":6.1,"rk":10381,"p":0,"best":[5,6],"rec":[3,4,5,6],"c":0,"l":0},{"n":"EXIT: The Game – Family: The Mystery at Meanstone Manor/The Caper at Candy Castle","mn":1,"mx":4,"t":75,"w":1.0,"r":7.3,"rk":11634,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – Kidnapped in Fortune City","mn":1,"mx":4,"t":90,"w":2.77,"r":7.8,"rk":2415,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – Kids: Jungle of Riddles","mn":1,"mx":4,"t":20,"w":1.1,"r":6.3,"rk":10236,"p":0,"best":[2],"rec":[1,2],"c":1,"l":0},{"n":"EXIT: The Game – Kids: Midnight Spooktacular","mn":1,"mx":4,"t":20,"w":1.0,"r":6.6,"rk":18827,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – The Abandoned Cabin","mn":1,"mx":6,"t":120,"w":2.54,"r":7.4,"rk":421,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":0},{"n":"EXIT: The Game – The Forbidden Castle","mn":1,"mx":4,"t":90,"w":3.22,"r":6.8,"rk":1993,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":0},{"n":"EXIT: The Game – The Forgotten Island","mn":1,"mx":4,"t":90,"w":2.62,"r":6.9,"rk":1733,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – The House of Riddles","mn":1,"mx":4,"t":90,"w":1.64,"r":6.9,"rk":2765,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":0},{"n":"EXIT: The Game – The Hunt Through Amsterdam","mn":1,"mx":4,"t":90,"w":2.38,"r":7.3,"rk":5295,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – The Lord of the Rings: Shadows over Middle-earth","mn":1,"mx":4,"t":90,"w":2.24,"r":6.4,"rk":3986,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – The Magical Academy","mn":1,"mx":4,"t":90,"w":2.0,"r":6.6,"rk":7859,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":0},{"n":"EXIT: The Game – The Mysterious Museum","mn":1,"mx":4,"t":90,"w":2.13,"r":7.1,"rk":1703,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"EXIT: The Game – The Venice Conspiracy","mn":1,"mx":4,"t":90,"w":3.2,"r":7.8,"rk":5588,"p":0,"best":[3],"rec":[1,2,3],"c":1,"l":0},{"n":"Exploding Kittens","mn":2,"mx":5,"t":15,"w":1.08,"r":6.1,"rk":3990,"p":0,"best":[4,5],"rec":[3,4,5],"c":0,"l":0},{"n":"Explorers of Navoria","mn":2,"mx":4,"t":80,"w":2.26,"r":7.5,"rk":1309,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Ezra and Nehemiah","mn":1,"mx":4,"t":120,"w":3.85,"r":8.1,"rk":468,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Familiar Tales","mn":1,"mx":4,"t":120,"w":2.53,"r":7.7,"rk":2437,"p":0,"best":[4],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Faraway","mn":2,"mx":6,"t":30,"w":1.94,"r":7.5,"rk":257,"p":2,"best":[3],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Fathom","mn":2,"mx":4,"t":60,"w":2.25,"r":7.0,"rk":14888,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Feya's Swamp","mn":2,"mx":4,"t":100,"w":3.17,"r":7.6,"rk":2188,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"First Orchard","mn":1,"mx":4,"t":10,"w":1.0,"r":6.7,"rk":3068,"p":0,"best":[3],"rec":[1,2,3,4],"c":1,"l":0},{"n":"Fisheries of Gloucester","mn":2,"mx":2,"t":45,"w":2.0,"r":6.6,"rk":14368,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Five Tribes: The Djinns of Naqala","mn":2,"mx":4,"t":80,"w":2.84,"r":7.8,"rk":97,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Flamecraft","mn":1,"mx":5,"t":60,"w":2.19,"r":7.4,"rk":402,"p":3,"best":[3],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Flash Point: Legacy of Flame","mn":1,"mx":6,"t":45,"w":2.17,"r":7.6,"rk":6440,"p":0,"best":[2,3,4],"rec":[1,2,3,4,5],"c":1,"l":1},{"n":"Flashback: Zombie Kidz","mn":1,"mx":4,"t":30,"w":1.33,"r":7.1,"rk":5841,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":1},{"n":"Fleet: The Dice Game","mn":1,"mx":4,"t":45,"w":2.5,"r":7.6,"rk":659,"p":1,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Fleet: The Dice Game (Second Edition)","mn":1,"mx":4,"t":45,"w":2.23,"r":7.7,"rk":1629,"p":2,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Fliptown","mn":1,"mx":4,"t":45,"w":2.4,"r":7.7,"rk":875,"p":0,"best":[1],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Food Chain Magnate","mn":2,"mx":5,"t":240,"w":4.19,"r":8.0,"rk":51,"p":0,"best":[3,4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Forbidden Desert","mn":2,"mx":5,"t":45,"w":2.04,"r":7.1,"rk":608,"p":1,"best":[4],"rec":[1,2,3,4,5],"c":1,"l":0},{"n":"Forbidden Island","mn":2,"mx":4,"t":30,"w":1.74,"r":6.7,"rk":1033,"p":2,"best":[4],"rec":[1,2,3,4],"c":1,"l":0},{"n":"Forbidden Jungle","mn":2,"mx":5,"t":45,"w":2.09,"r":7.3,"rk":2623,"p":0,"best":[3],"rec":[2,3,4],"c":1,"l":0},{"n":"Forest Shuffle","mn":2,"mx":5,"t":60,"w":2.21,"r":7.7,"rk":151,"p":1,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Forges of Ravenshire","mn":1,"mx":4,"t":100,"w":2.87,"r":7.6,"rk":4418,"p":3,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Forgotten Waters","mn":3,"mx":7,"t":240,"w":2.09,"r":7.7,"rk":365,"p":0,"best":[5],"rec":[2,3,4,5,6,7],"c":1,"l":1},{"n":"Formaggio","mn":1,"mx":4,"t":45,"w":2.39,"r":8.1,"rk":1644,"p":4,"best":[4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Formula Dé","mn":2,"mx":10,"t":120,"w":1.95,"r":7.0,"rk":1099,"p":0,"best":[5],"rec":[3,4,5,6,7,8,9,10],"c":0,"l":0},{"n":"Fort","mn":2,"mx":4,"t":40,"w":2.45,"r":7.1,"rk":820,"p":1,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Gal4Xeon","mn":1,"mx":99,"t":40,"w":2.0,"r":6.6,"rk":0,"p":4,"best":[],"rec":[],"c":0,"l":0},{"n":"Garden Variety","mn":2,"mx":5,"t":15,"w":1.0,"r":6.2,"rk":16148,"p":0,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Gary Gouda","mn":2,"mx":4,"t":10,"w":1.0,"r":6.2,"rk":17913,"p":0,"best":[2,3],"rec":[2,3,4],"c":0,"l":0},{"n":"Genotype: A Mendelian Genetics Game","mn":1,"mx":5,"t":90,"w":2.78,"r":7.4,"rk":1343,"p":0,"best":[3,4],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Gingerbread House","mn":2,"mx":4,"t":30,"w":1.85,"r":7.0,"rk":1790,"p":2,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Gnome Hollow","mn":2,"mx":4,"t":60,"w":2.47,"r":6.9,"rk":3057,"p":0,"best":[3],"rec":[2,3],"c":0,"l":0},{"n":"Gobblers","mn":2,"mx":2,"t":5,"w":1.3,"r":6.3,"rk":5681,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Grand Central Skyport","mn":2,"mx":4,"t":60,"w":2.1,"r":7.0,"rk":9119,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Guess in 10: Animal Planet","mn":2,"mx":6,"t":0,"w":1.0,"r":4.9,"rk":29278,"p":0,"best":[2],"rec":[2,4,6],"c":0,"l":0},{"n":"Gunfights & Gamblin'","mn":2,"mx":4,"t":75,"w":2.0,"r":7.8,"rk":18001,"p":2,"best":[2,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Habitats","mn":1,"mx":5,"t":50,"w":2.04,"r":7.3,"rk":1215,"p":5,"best":[3],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Hadrian's Wall","mn":1,"mx":6,"t":60,"w":3.17,"r":7.9,"rk":172,"p":0,"best":[1],"rec":[1,2,3],"c":0,"l":0},{"n":"Hallertau","mn":1,"mx":4,"t":140,"w":3.28,"r":7.8,"rk":302,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Happy Little Dinosaurs","mn":2,"mx":4,"t":60,"w":1.39,"r":6.2,"rk":4558,"p":1,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Harmonies","mn":1,"mx":4,"t":45,"w":2.01,"r":8.0,"rk":54,"p":2,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Harry Potter: Hogwarts Battle","mn":2,"mx":4,"t":60,"w":2.09,"r":7.3,"rk":453,"p":1,"best":[2,4],"rec":[2,3,4],"c":1,"l":1},{"n":"Hercules and the 12 Labors","mn":1,"mx":1,"t":60,"w":2.4,"r":7.4,"rk":4968,"p":0,"best":[1],"rec":[1],"c":0,"l":0},{"n":"Here to Slay","mn":2,"mx":6,"t":60,"w":1.69,"r":6.9,"rk":1509,"p":3,"best":[3,4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"HeroQuest","mn":2,"mx":5,"t":90,"w":2.13,"r":7.2,"rk":706,"p":0,"best":[5],"rec":[2,3,4,5],"c":0,"l":1},{"n":"Hidden Realms: The Mummy's Tomb","mn":1,"mx":99,"t":75,"w":2.0,"r":8.9,"rk":19830,"p":5,"best":[1],"rec":[1,2],"c":0,"l":0},{"n":"High-Bid","mn":2,"mx":4,"t":25,"w":1.79,"r":5.9,"rk":15186,"p":0,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Hummingbirds","mn":2,"mx":4,"t":15,"w":1.5,"r":7.3,"rk":8657,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Imperial Settlers","mn":1,"mx":4,"t":90,"w":2.78,"r":7.3,"rk":400,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Imperial Settlers: Roll & Write","mn":1,"mx":4,"t":30,"w":1.88,"r":6.2,"rk":4165,"p":0,"best":[1],"rec":[1,2],"c":0,"l":0},{"n":"Iron Dragon","mn":2,"mx":6,"t":240,"w":2.93,"r":7.0,"rk":2757,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Ishtar: Gardens of Babylon","mn":2,"mx":4,"t":45,"w":2.28,"r":7.0,"rk":1751,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Islebound: Emerald Edition","mn":2,"mx":4,"t":90,"w":2.57,"r":7.6,"rk":7139,"p":0,"best":[2,3],"rec":[2,3,4],"c":0,"l":0},{"n":"Kingdom Legacy: Feudal Kingdom","mn":1,"mx":1,"t":480,"w":2.26,"r":8.0,"rk":625,"p":0,"best":[1],"rec":[1],"c":1,"l":1},{"n":"Kingdomino","mn":2,"mx":4,"t":25,"w":1.24,"r":7.3,"rk":328,"p":0,"best":[2,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Kingdomino Duel","mn":2,"mx":2,"t":20,"w":1.5,"r":6.7,"rk":2700,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Kutná Hora: The City of Silver","mn":2,"mx":4,"t":120,"w":3.33,"r":7.7,"rk":477,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"La Città","mn":2,"mx":5,"t":120,"w":3.27,"r":7.0,"rk":1268,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Labyrinth","mn":2,"mx":4,"t":20,"w":1.34,"r":6.4,"rk":2110,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Lands of Galzyr","mn":1,"mx":4,"t":150,"w":1.71,"r":7.9,"rk":1044,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":1},{"n":"Legacy of Yu","mn":1,"mx":1,"t":60,"w":2.89,"r":8.1,"rk":378,"p":0,"best":[1],"rec":[1],"c":1,"l":1},{"n":"Life on the Farm Board Game","mn":2,"mx":6,"t":120,"w":1.33,"r":4.6,"rk":30098,"p":0,"best":[1,2],"rec":[2,3],"c":0,"l":0},{"n":"Lords of Waterdeep","mn":2,"mx":5,"t":120,"w":2.45,"r":7.7,"rk":106,"p":0,"best":[3,4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Lost Cities","mn":2,"mx":2,"t":30,"w":1.47,"r":7.3,"rk":347,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Luxantis","mn":2,"mx":4,"t":30,"w":1.2,"r":6.0,"rk":21468,"p":1,"best":[3,4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Maracaibo","mn":1,"mx":4,"t":120,"w":3.92,"r":7.9,"rk":90,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"March of the Ants: Evolved Edition","mn":1,"mx":5,"t":90,"w":3.23,"r":7.6,"rk":2711,"p":0,"best":[4],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Marrying Mr. Darcy","mn":2,"mx":6,"t":60,"w":1.42,"r":6.4,"rk":4339,"p":1,"best":[4,5],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Masters of Crime: Vendetta","mn":1,"mx":6,"t":240,"w":2.0,"r":7.5,"rk":8165,"p":0,"best":[4],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Meadow","mn":1,"mx":4,"t":90,"w":2.25,"r":7.7,"rk":218,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Merchants Cove","mn":1,"mx":4,"t":90,"w":2.75,"r":7.4,"rk":985,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Merchants of the Dark Road","mn":1,"mx":4,"t":120,"w":3.28,"r":7.3,"rk":1076,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Messina 1347","mn":1,"mx":4,"t":140,"w":3.61,"r":7.5,"rk":874,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"MicroMacro: Crime City","mn":1,"mx":4,"t":45,"w":1.1,"r":7.4,"rk":293,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"MicroMacro: Crime City – Full House","mn":1,"mx":4,"t":45,"w":1.16,"r":7.6,"rk":535,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"MicroMacro: Kids – Crazy City Park","mn":1,"mx":4,"t":45,"w":1.0,"r":7.7,"rk":4850,"p":0,"best":[2],"rec":[1,2,3],"c":1,"l":0},{"n":"MiFuChi","mn":2,"mx":2,"t":15,"w":1.25,"r":4.8,"rk":29466,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Miller Zoo","mn":1,"mx":6,"t":30,"w":1.83,"r":6.9,"rk":9044,"p":0,"best":[4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Mind MGMT: The Psychic Espionage “Game.”","mn":1,"mx":5,"t":60,"w":2.9,"r":7.8,"rk":321,"p":0,"best":[2,3],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"MindTrap","mn":2,"mx":16,"t":60,"w":1.94,"r":4.8,"rk":30819,"p":0,"best":[6],"rec":[2,4,5,6,7,8,9,10],"c":0,"l":0},{"n":"MindTrap II","mn":2,"mx":10,"t":60,"w":1.94,"r":5.3,"rk":29834,"p":0,"best":[4,6],"rec":[3,4,5,6,7,8],"c":0,"l":0},{"n":"Mistborn: The Deckbuilding Game","mn":1,"mx":4,"t":60,"w":2.68,"r":7.7,"rk":1001,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Mistwind","mn":1,"mx":5,"t":120,"w":3.13,"r":7.7,"rk":2609,"p":4,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Monastery","mn":2,"mx":4,"t":60,"w":2.86,"r":6.2,"rk":9835,"p":6,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Monkey Palace","mn":2,"mx":4,"t":45,"w":2.0,"r":7.1,"rk":1901,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Monopoly Deal Card Game","mn":2,"mx":5,"t":15,"w":1.31,"r":6.3,"rk":2680,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Monopoly Junior","mn":2,"mx":4,"t":45,"w":1.19,"r":4.4,"rk":30841,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Mountain Goats","mn":2,"mx":4,"t":20,"w":1.21,"r":6.8,"rk":1512,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Mouse Trap","mn":2,"mx":4,"t":30,"w":1.1,"r":4.1,"rk":30855,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Munchkin Babies","mn":3,"mx":6,"t":120,"w":2.0,"r":7.2,"rk":0,"p":0,"best":[3],"rec":[3,4],"c":0,"l":0},{"n":"Munchkin Impossible","mn":3,"mx":6,"t":120,"w":1.83,"r":5.9,"rk":9292,"p":1,"best":[4],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Munchkin Wonderland","mn":2,"mx":6,"t":60,"w":1.25,"r":6.0,"rk":22239,"p":0,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"My City","mn":2,"mx":4,"t":30,"w":1.98,"r":7.6,"rk":270,"p":24,"best":[4],"rec":[2,3,4],"c":0,"l":1},{"n":"My Island","mn":2,"mx":4,"t":30,"w":2.28,"r":7.3,"rk":1889,"p":7,"best":[2],"rec":[2,3,4],"c":0,"l":1},{"n":"Mycelia","mn":1,"mx":4,"t":45,"w":1.88,"r":7.4,"rk":1384,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Mysterium","mn":2,"mx":7,"t":42,"w":1.89,"r":7.2,"rk":451,"p":0,"best":[5,6],"rec":[3,4,5,6,7],"c":1,"l":0},{"n":"Mystery of the Abbey","mn":3,"mx":6,"t":90,"w":2.2,"r":6.5,"rk":1955,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Near and Far","mn":2,"mx":4,"t":120,"w":2.9,"r":7.6,"rk":280,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"New York Zoo","mn":1,"mx":5,"t":60,"w":1.97,"r":7.0,"rk":938,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Oceans","mn":2,"mx":4,"t":90,"w":2.85,"r":7.4,"rk":641,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Oceans","mn":2,"mx":4,"t":90,"w":2.85,"r":7.4,"rk":641,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Orléans","mn":2,"mx":5,"t":90,"w":3.01,"r":8.0,"rk":35,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Outfoxed!","mn":2,"mx":4,"t":20,"w":1.1,"r":7.1,"rk":1087,"p":3,"best":[3,4],"rec":[2,3,4],"c":1,"l":0},{"n":"Overboss Duel","mn":2,"mx":2,"t":30,"w":2.0,"r":6.7,"rk":11848,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Paladins of the West Kingdom","mn":1,"mx":4,"t":120,"w":3.71,"r":8.0,"rk":81,"p":2,"best":[2],"rec":[1,2,3],"c":0,"l":0},{"n":"Paleo","mn":2,"mx":4,"t":60,"w":2.65,"r":7.6,"rk":234,"p":0,"best":[2,3],"rec":[1,2,3,4],"c":1,"l":0},{"n":"Pan Am","mn":2,"mx":4,"t":60,"w":2.4,"r":7.5,"rk":457,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Pandemic","mn":2,"mx":4,"t":45,"w":2.39,"r":7.5,"rk":173,"p":0,"best":[4],"rec":[1,2,3,4],"c":1,"l":0},{"n":"Pandemic Legacy: Season 0","mn":2,"mx":4,"t":60,"w":3.19,"r":8.3,"rk":59,"p":0,"best":[4],"rec":[2,3,4],"c":1,"l":1},{"n":"Parks","mn":1,"mx":5,"t":60,"w":2.13,"r":7.6,"rk":181,"p":1,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Pen the Pig","mn":2,"mx":4,"t":20,"w":1.0,"r":5.0,"rk":0,"p":0,"best":[],"rec":[],"c":0,"l":0},{"n":"Perfection","mn":1,"mx":99,"t":6,"w":1.04,"r":4.4,"rk":30831,"p":0,"best":[1],"rec":[1,2],"c":0,"l":0},{"n":"Petrichor: Collector's Edition","mn":1,"mx":5,"t":80,"w":3.44,"r":7.8,"rk":0,"p":0,"best":[4],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Phoenix New Horizon","mn":1,"mx":4,"t":120,"w":3.22,"r":7.8,"rk":1987,"p":0,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Piña Pirata","mn":2,"mx":6,"t":30,"w":1.24,"r":6.1,"rk":7498,"p":0,"best":[3,4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Porta Nigra","mn":2,"mx":4,"t":120,"w":2.99,"r":7.2,"rk":1747,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Potions of Azerland","mn":1,"mx":4,"t":90,"w":2.69,"r":7.0,"rk":5166,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Power Grid","mn":2,"mx":6,"t":120,"w":3.25,"r":7.8,"rk":75,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Praga Caput Regni","mn":1,"mx":4,"t":150,"w":3.73,"r":7.8,"rk":193,"p":2,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Prehistories","mn":2,"mx":5,"t":30,"w":1.93,"r":6.9,"rk":4074,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Pretty Pretty Princess","mn":2,"mx":4,"t":20,"w":1.04,"r":4.4,"rk":30756,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Probe","mn":2,"mx":4,"t":60,"w":1.54,"r":5.8,"rk":11401,"p":0,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Puerto Rico","mn":3,"mx":5,"t":150,"w":3.27,"r":7.9,"rk":57,"p":5,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Quacks","mn":2,"mx":4,"t":45,"w":1.94,"r":7.8,"rk":80,"p":5,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Quacks & Co.: Quedlinburg Dash","mn":2,"mx":4,"t":25,"w":1.24,"r":7.3,"rk":2450,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Québec","mn":2,"mx":5,"t":75,"w":2.98,"r":7.1,"rk":2291,"p":3,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Race for the Galaxy","mn":2,"mx":4,"t":60,"w":2.99,"r":7.7,"rk":94,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Raiders of Scythia","mn":1,"mx":4,"t":80,"w":2.78,"r":7.7,"rk":399,"p":1,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Raiders of the North Sea","mn":2,"mx":4,"t":80,"w":2.57,"r":7.7,"rk":135,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Rajas of the Ganges","mn":2,"mx":4,"t":75,"w":2.9,"r":7.7,"rk":169,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Realm of Sand","mn":1,"mx":4,"t":60,"w":2.03,"r":6.7,"rk":4399,"p":1,"best":[2],"rec":[1,2,3],"c":0,"l":0},{"n":"Reavers of Midgard","mn":2,"mx":4,"t":120,"w":2.93,"r":7.3,"rk":1246,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Rebirth","mn":2,"mx":4,"t":60,"w":2.0,"r":7.8,"rk":385,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Redwood","mn":1,"mx":4,"t":60,"w":2.12,"r":7.2,"rk":3267,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Reef Project","mn":1,"mx":4,"t":90,"w":2.96,"r":7.5,"rk":3206,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Regicide Legacy","mn":1,"mx":4,"t":60,"w":2.5,"r":8.6,"rk":3039,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"REM Racers","mn":2,"mx":5,"t":90,"w":2.17,"r":6.0,"rk":24113,"p":0,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Res Arcana","mn":2,"mx":4,"t":60,"w":2.66,"r":7.6,"rk":185,"p":2,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Revive","mn":1,"mx":4,"t":120,"w":3.46,"r":8.1,"rk":93,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Reykholt","mn":1,"mx":4,"t":60,"w":2.16,"r":6.7,"rk":2184,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Rise","mn":2,"mx":4,"t":60,"w":2.63,"r":7.0,"rk":3288,"p":3,"best":[2,3],"rec":[2,3,4],"c":0,"l":0},{"n":"River Valley Glassworks","mn":1,"mx":5,"t":45,"w":1.49,"r":7.3,"rk":880,"p":2,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Road Hog","mn":2,"mx":4,"t":45,"w":0.0,"r":5.7,"rk":0,"p":0,"best":[],"rec":[],"c":0,"l":0},{"n":"Roam","mn":2,"mx":4,"t":45,"w":1.85,"r":7.3,"rk":1011,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Robo Rally","mn":2,"mx":6,"t":120,"w":2.36,"r":6.9,"rk":1765,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Robo Rally: 30th Anniversary","mn":2,"mx":8,"t":90,"w":2.67,"r":8.2,"rk":7815,"p":0,"best":[5,6],"rec":[2,3,4,5,6,7,8],"c":0,"l":0},{"n":"RoboRally","mn":2,"mx":8,"t":120,"w":2.43,"r":7.0,"rk":654,"p":0,"best":[5,6],"rec":[3,4,5,6,7,8],"c":0,"l":0},{"n":"Rock Paper Switch","mn":2,"mx":4,"t":45,"w":0.0,"r":7.0,"rk":0,"p":1,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Rolling Realms","mn":1,"mx":6,"t":30,"w":2.0,"r":7.1,"rk":1143,"p":1,"best":[1,2],"rec":[1,2,3,4,5,6],"c":0,"l":0},{"n":"Rolling Realms Redux","mn":1,"mx":6,"t":45,"w":2.64,"r":7.8,"rk":3248,"p":0,"best":[1,2],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Root","mn":2,"mx":4,"t":90,"w":3.84,"r":8.1,"rk":34,"p":0,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Sagrada Artisans","mn":2,"mx":4,"t":60,"w":2.4,"r":7.7,"rk":2366,"p":0,"best":[2,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Sail","mn":2,"mx":2,"t":20,"w":2.21,"r":7.3,"rk":966,"p":3,"best":[2],"rec":[2],"c":1,"l":0},{"n":"Saint Petersburg","mn":2,"mx":4,"t":60,"w":2.43,"r":7.3,"rk":489,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Saltfjord","mn":1,"mx":4,"t":90,"w":3.03,"r":7.8,"rk":942,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Scattergories","mn":2,"mx":6,"t":30,"w":1.36,"r":6.3,"rk":2744,"p":0,"best":[4,5,6],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Scrabble","mn":2,"mx":4,"t":90,"w":2.05,"r":6.3,"rk":2427,"p":1,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Scrabble Junior","mn":2,"mx":4,"t":30,"w":1.36,"r":4.8,"rk":30765,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Shadows over Camelot","mn":3,"mx":7,"t":90,"w":2.57,"r":7.1,"rk":597,"p":0,"best":[5,6,7],"rec":[4,5,6,7],"c":1,"l":0},{"n":"Sky Team","mn":2,"mx":2,"t":20,"w":2.04,"r":8.1,"rk":32,"p":4,"best":[2],"rec":[2],"c":1,"l":0},{"n":"Skyjo","mn":2,"mx":8,"t":45,"w":1.05,"r":6.6,"rk":1943,"p":0,"best":[4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Sleeping Gods","mn":1,"mx":4,"t":1200,"w":3.26,"r":8.1,"rk":74,"p":0,"best":[1,2],"rec":[1,2,3],"c":1,"l":1},{"n":"Sleeping Gods: Distant Skies","mn":1,"mx":4,"t":600,"w":2.95,"r":8.3,"rk":839,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Sleeping Queens","mn":2,"mx":5,"t":20,"w":1.06,"r":6.5,"rk":2640,"p":0,"best":[4,5],"rec":[2,3,4,5],"c":0,"l":0},{"n":"So, You've Been Eaten.","mn":1,"mx":2,"t":30,"w":2.12,"r":6.5,"rk":4918,"p":0,"best":[1,2],"rec":[1,2],"c":0,"l":0},{"n":"Solar 175","mn":1,"mx":4,"t":120,"w":3.0,"r":7.4,"rk":7029,"p":0,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"Sorry!","mn":2,"mx":4,"t":30,"w":1.16,"r":4.6,"rk":30853,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Spirits of Christmas","mn":1,"mx":6,"t":45,"w":1.8,"r":7.2,"rk":15510,"p":0,"best":[1],"rec":[1,2,4],"c":0,"l":0},{"n":"Sprawlopolis","mn":1,"mx":4,"t":20,"w":1.8,"r":7.3,"rk":546,"p":0,"best":[1],"rec":[1,2],"c":1,"l":0},{"n":"Squishyland","mn":2,"mx":6,"t":15,"w":0.0,"r":5.0,"rk":0,"p":0,"best":[],"rec":[],"c":0,"l":0},{"n":"Stack'n Stuff: A Patchwork Game","mn":2,"mx":2,"t":30,"w":1.6,"r":7.0,"rk":7837,"p":1,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Star Trek: Catan","mn":3,"mx":4,"t":75,"w":2.35,"r":7.0,"rk":1715,"p":0,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"Star Wars: Unlimited – Intro Battle: Hoth","mn":2,"mx":2,"t":20,"w":2.0,"r":7.3,"rk":10424,"p":3,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Steam","mn":3,"mx":6,"t":90,"w":3.45,"r":7.5,"rk":345,"p":0,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Stocks & Bonds","mn":2,"mx":8,"t":60,"w":2.02,"r":5.8,"rk":13887,"p":0,"best":[4],"rec":[2,3,4,5,6,7,8],"c":0,"l":0},{"n":"Stone Age","mn":2,"mx":4,"t":90,"w":2.46,"r":7.5,"rk":188,"p":2,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Story Time Chess","mn":2,"mx":2,"t":10,"w":1.4,"r":7.0,"rk":12610,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Storyfold: Wildwoods","mn":1,"mx":1,"t":60,"w":2.12,"r":7.8,"rk":3809,"p":5,"best":[1],"rec":[1],"c":0,"l":0},{"n":"Super Snipers","mn":1,"mx":2,"t":30,"w":2.14,"r":7.5,"rk":12358,"p":0,"best":[2],"rec":[1,2],"c":0,"l":0},{"n":"Sushi Go!","mn":2,"mx":5,"t":15,"w":1.16,"r":7.0,"rk":662,"p":2,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Tainted Grail: The Fall of Avalon","mn":1,"mx":4,"t":120,"w":3.37,"r":8.0,"rk":137,"p":0,"best":[1,2],"rec":[1,2,3],"c":1,"l":1},{"n":"Tales from the Red Dragon Inn","mn":1,"mx":4,"t":120,"w":2.62,"r":8.3,"rk":2137,"p":0,"best":[1,2,4],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Tambuzi ... den Letzten trifft der Blitz!","mn":2,"mx":4,"t":10,"w":1.0,"r":5.5,"rk":26604,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Tao Long: The Way of the Dragon","mn":2,"mx":2,"t":30,"w":2.74,"r":6.8,"rk":3323,"p":2,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Tea Witches","mn":2,"mx":4,"t":120,"w":3.11,"r":7.6,"rk":3653,"p":0,"best":[3],"rec":[2,3],"c":0,"l":0},{"n":"Tenpenny Parks","mn":1,"mx":4,"t":75,"w":2.18,"r":7.4,"rk":1868,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Terra Nova","mn":2,"mx":4,"t":90,"w":2.86,"r":7.1,"rk":1772,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Terraforming Mars: The Dice Game","mn":1,"mx":4,"t":45,"w":2.41,"r":7.3,"rk":1029,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"The Animals of Baker Street","mn":1,"mx":4,"t":45,"w":1.81,"r":7.5,"rk":3105,"p":0,"best":[2],"rec":[1,2,3,4],"c":1,"l":1},{"n":"The Castles of Burgundy","mn":2,"mx":4,"t":90,"w":2.97,"r":8.2,"rk":17,"p":1,"best":[2],"rec":[2,3,4],"c":0,"l":0},{"n":"The Castles of Burgundy: The Card Game","mn":1,"mx":4,"t":60,"w":2.59,"r":6.9,"rk":1161,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"The Cave","mn":2,"mx":5,"t":60,"w":2.52,"r":6.5,"rk":3768,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"The Crew: Mission Deep Sea","mn":2,"mx":5,"t":20,"w":2.05,"r":8.0,"rk":43,"p":0,"best":[4],"rec":[3,4,5],"c":1,"l":0},{"n":"The Crew: The Quest for Planet Nine","mn":2,"mx":5,"t":20,"w":1.97,"r":7.8,"rk":95,"p":0,"best":[4],"rec":[3,4,5],"c":1,"l":0},{"n":"The Farming Game","mn":2,"mx":6,"t":120,"w":1.67,"r":6.0,"rk":11489,"p":1,"best":[3,4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"The Game of Life","mn":2,"mx":6,"t":60,"w":1.17,"r":4.4,"rk":30860,"p":0,"best":[4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"The Grimm Forest","mn":2,"mx":4,"t":60,"w":1.92,"r":7.1,"rk":1172,"p":1,"best":[4],"rec":[3,4],"c":0,"l":0},{"n":"The Guild of Merchant Explorers","mn":1,"mx":4,"t":45,"w":2.05,"r":7.6,"rk":363,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"The Lost Expedition","mn":1,"mx":5,"t":50,"w":1.87,"r":7.0,"rk":1022,"p":0,"best":[1],"rec":[1,2,3],"c":1,"l":0},{"n":"The Morrison Game Factory","mn":1,"mx":4,"t":240,"w":2.22,"r":8.3,"rk":3504,"p":0,"best":[2],"rec":[1,2,3],"c":0,"l":0},{"n":"The River","mn":2,"mx":4,"t":45,"w":1.94,"r":6.6,"rk":2936,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"The Search for Lost Species","mn":1,"mx":4,"t":75,"w":2.95,"r":7.7,"rk":1264,"p":0,"best":[2],"rec":[1,2,3,4],"c":0,"l":0},{"n":"The Search for Planet X","mn":1,"mx":4,"t":75,"w":2.43,"r":7.9,"rk":116,"p":0,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"The Taverns of Tiefenthal","mn":2,"mx":4,"t":60,"w":2.69,"r":7.6,"rk":250,"p":0,"best":[2,3],"rec":[2,3,4],"c":0,"l":0},{"n":"The Uncanny X-Men Alert Adventure Game","mn":2,"mx":4,"t":60,"w":1.57,"r":6.2,"rk":10146,"p":0,"best":[4],"rec":[2,3,4],"c":1,"l":1},{"n":"Thorgal: The Board Game","mn":1,"mx":4,"t":120,"w":3.19,"r":7.4,"rk":4472,"p":0,"best":[1,2],"rec":[1,2,3],"c":1,"l":1},{"n":"Three Sisters","mn":1,"mx":4,"t":60,"w":2.64,"r":7.5,"rk":737,"p":0,"best":[2,3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Throw Throw Avocado","mn":2,"mx":6,"t":15,"w":1.0,"r":6.3,"rk":8146,"p":0,"best":[5,6],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Thug Life the Game","mn":2,"mx":5,"t":60,"w":2.0,"r":8.6,"rk":23339,"p":1,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Ticket to Ride","mn":2,"mx":5,"t":60,"w":1.82,"r":7.4,"rk":262,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Ticket to Ride Legacy: Legends of the West","mn":2,"mx":5,"t":90,"w":2.57,"r":8.6,"rk":50,"p":5,"best":[4],"rec":[2,3,4,5],"c":0,"l":1},{"n":"Ticket to Ride: First Journey (U.S.)","mn":2,"mx":4,"t":30,"w":1.38,"r":6.8,"rk":2276,"p":1,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Tigris & Euphrates","mn":2,"mx":4,"t":120,"w":3.48,"r":7.7,"rk":131,"p":7,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Tiletum","mn":1,"mx":4,"t":100,"w":3.38,"r":7.9,"rk":284,"p":0,"best":[2,3],"rec":[1,2,3],"c":0,"l":0},{"n":"Time of Empires","mn":2,"mx":4,"t":60,"w":3.1,"r":7.3,"rk":5554,"p":2,"best":[2,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Tinners' Trail: Expanded Edition","mn":1,"mx":5,"t":90,"w":3.0,"r":7.3,"rk":0,"p":0,"best":[3],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Tiny Epic Dinosaurs","mn":1,"mx":4,"t":60,"w":2.65,"r":7.3,"rk":1081,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Tiny Towns","mn":1,"mx":6,"t":60,"w":2.06,"r":7.2,"rk":524,"p":0,"best":[3],"rec":[1,2,3,4,5],"c":0,"l":0},{"n":"Toy Battle","mn":2,"mx":2,"t":15,"w":1.48,"r":7.8,"rk":338,"p":3,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Trail Story: America","mn":2,"mx":4,"t":120,"w":2.67,"r":7.2,"rk":14379,"p":0,"best":[2],"rec":[2,3],"c":0,"l":0},{"n":"Trailblazer: The Arizona Trail","mn":1,"mx":4,"t":160,"w":3.5,"r":7.1,"rk":6807,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Transmissions","mn":1,"mx":4,"t":60,"w":2.03,"r":7.3,"rk":2848,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Trek 12: Himalaya","mn":1,"mx":50,"t":30,"w":1.44,"r":6.8,"rk":2223,"p":0,"best":[4],"rec":[1,2,3,4,5,6,7],"c":0,"l":0},{"n":"Trekking the World","mn":2,"mx":5,"t":60,"w":1.89,"r":7.0,"rk":1606,"p":0,"best":[4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Tsuro","mn":2,"mx":8,"t":20,"w":1.22,"r":6.7,"rk":1249,"p":0,"best":[4,6],"rec":[2,3,4,5,6,7,8],"c":0,"l":0},{"n":"Turing Machine","mn":1,"mx":4,"t":20,"w":2.53,"r":7.6,"rk":322,"p":0,"best":[1],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Twisted Cryptids","mn":2,"mx":4,"t":60,"w":1.93,"r":6.7,"rk":8116,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Uncle Wiggily","mn":2,"mx":4,"t":30,"w":1.03,"r":4.1,"rk":30771,"p":0,"best":[3,4],"rec":[2,3,4],"c":0,"l":0},{"n":"Unconscious Mind","mn":1,"mx":4,"t":120,"w":4.02,"r":7.9,"rk":305,"p":0,"best":[2,3],"rec":[1,2,3],"c":0,"l":0},{"n":"Vantage","mn":1,"mx":6,"t":180,"w":2.32,"r":8.2,"rk":197,"p":0,"best":[1,2],"rec":[1,2,3],"c":1,"l":1},{"n":"Viticulture","mn":2,"mx":6,"t":90,"w":2.95,"r":7.5,"rk":319,"p":0,"best":[3,4],"rec":[2,3,4,5],"c":0,"l":0},{"n":"Voyages","mn":1,"mx":100,"t":30,"w":1.78,"r":7.4,"rk":1813,"p":7,"best":[1,2,3],"rec":[1,2,3,4,5,6,7,8],"c":0,"l":0},{"n":"Wandering Towers","mn":1,"mx":6,"t":30,"w":1.59,"r":7.3,"rk":719,"p":0,"best":[4,5],"rec":[3,4,5,6],"c":0,"l":0},{"n":"Warsaw: City of Ruins","mn":2,"mx":4,"t":60,"w":2.19,"r":7.3,"rk":1705,"p":0,"best":[4],"rec":[2,3,4],"c":0,"l":0},{"n":"Watergate","mn":2,"mx":2,"t":60,"w":2.29,"r":7.7,"rk":189,"p":2,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Waypoints","mn":1,"mx":100,"t":40,"w":2.29,"r":7.6,"rk":3065,"p":0,"best":[1,2],"rec":[1,2,3,4,5],"c":1,"l":1},{"n":"Weapons & Warriors:  Castle Combat Set","mn":2,"mx":99,"t":30,"w":1.25,"r":6.1,"rk":11052,"p":0,"best":[2],"rec":[2],"c":0,"l":0},{"n":"Weather Machine","mn":2,"mx":4,"t":150,"w":4.56,"r":7.7,"rk":717,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Welcome to Everdell","mn":1,"mx":4,"t":30,"w":1.89,"r":7.5,"rk":1558,"p":2,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Welcome To...","mn":1,"mx":100,"t":25,"w":1.84,"r":7.5,"rk":214,"p":0,"best":[3,4],"rec":[1,2,3,4,5,6,7,8,9,10],"c":0,"l":0},{"n":"Western Legends","mn":2,"mx":6,"t":90,"w":2.85,"r":7.6,"rk":289,"p":1,"best":[4],"rec":[3,4,5],"c":0,"l":0},{"n":"Windmill Valley","mn":1,"mx":4,"t":90,"w":3.07,"r":7.7,"rk":727,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Wolves","mn":3,"mx":6,"t":90,"w":2.0,"r":6.4,"rk":16386,"p":0,"best":[5,6],"rec":[4,5,6],"c":0,"l":0},{"n":"Wonder Book","mn":1,"mx":4,"t":90,"w":2.05,"r":7.6,"rk":2762,"p":1,"best":[4],"rec":[1,2,3,4],"c":1,"l":1},{"n":"Wondrous Creatures","mn":1,"mx":4,"t":80,"w":3.02,"r":8.0,"rk":229,"p":0,"best":[2,3],"rec":[1,2,3],"c":0,"l":0},{"n":"Woodcraft","mn":1,"mx":4,"t":120,"w":3.83,"r":7.6,"rk":534,"p":0,"best":[3],"rec":[1,2,3],"c":0,"l":0},{"n":"Wyrmspan","mn":1,"mx":5,"t":90,"w":2.83,"r":8.0,"rk":124,"p":0,"best":[3],"rec":[1,2,3,4],"c":0,"l":0},{"n":"Yahtzee","mn":2,"mx":10,"t":30,"w":1.17,"r":5.6,"rk":26109,"p":0,"best":[3,4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Yokohama","mn":2,"mx":4,"t":90,"w":3.27,"r":7.8,"rk":156,"p":0,"best":[3],"rec":[2,3,4],"c":0,"l":0},{"n":"Ziggurat","mn":2,"mx":4,"t":45,"w":1.5,"r":7.1,"rk":8272,"p":0,"best":[4],"rec":[1,3,4],"c":0,"l":0},{"n":"Zingo!","mn":2,"mx":8,"t":5,"w":1.03,"r":5.4,"rk":30291,"p":0,"best":[3,4],"rec":[2,3,4,5,6],"c":0,"l":0},{"n":"Zombie Teenz Evolution","mn":2,"mx":4,"t":20,"w":1.43,"r":7.6,"rk":1263,"p":7,"best":[3,4],"rec":[2,3,4],"c":1,"l":1},{"n":"Águeda: City of Umbrellas","mn":1,"mx":5,"t":40,"w":1.71,"r":6.9,"rk":5615,"p":0,"best":[3,4],"rec":[1,2,3,4],"c":0,"l":0}];
+
+const state = {
+  players: 2,
+  fit: "any",        // any | rec | best
+  wMin: 1.0, wMax: 5.0,
+  rMin: 0.0,
+  maxTime: null,
+  played: "either",  // either | unplayed | played
+  coop: "either",    // either | coop | comp
+  legacy: "either",  // either | only | hide
+  sortKey: "rk",
+  sortDir: 1,        // 1 asc, -1 desc
+  picks: [],
+  pickedIndex: -1,
+};
+
+const $ = id => document.getElementById(id);
+
+/* ---------- filtering ---------- */
+function fitOf(g){
+  if (g.best && g.best.includes(state.players)) return "best";
+  if (g.rec && g.rec.includes(state.players)) return "rec";
+  return "none";
+}
+function matches(g){
+  if (g.mn > state.players || g.mx < state.players) return false;
+  if (g.w > 0){
+    if (g.w < state.wMin - 1e-9 || g.w > state.wMax + 1e-9) return false;
+  }
+  if (state.rMin > 0 && (g.r || 0) < state.rMin - 1e-9) return false;
+  if (state.maxTime != null && g.t > 0 && g.t > state.maxTime) return false;
+  if (state.played === "unplayed" && g.p > 0) return false;
+  if (state.played === "played" && g.p === 0) return false;
+  if (state.coop === "coop" && g.c !== 1) return false;
+  if (state.coop === "comp" && g.c === 1) return false;
+  if (state.legacy === "only" && g.l !== 1) return false;
+  if (state.legacy === "hide" && g.l === 1) return false;
+  const f = fitOf(g);
+  if (state.fit === "rec" && !(f === "rec" || f === "best")) return false;
+  if (state.fit === "best" && f !== "best") return false;
+  return true;
+}
+function matched(){ return GAMES.filter(matches); }
+
+/* ---------- weighted pick ---------- */
+function score(g){
+  let s = Math.random();
+  const f = fitOf(g);
+  if (f === "best") s *= 2.0;
+  else if (f === "rec") s *= 1.3;
+  if (g.p === 0) s *= 1.2;
+  return s;
+}
+function deal(){
+  const pool = matched();
+  state.picks = pool
+    .map(g => ({g, s: score(g)}))
+    .sort((a,b)=>b.s-a.s)
+    .slice(0,3)
+    .map(x=>x.g);
+  state.pickedIndex = -1;
+  renderPicks();
+}
+
+/* ---------- rendering helpers ---------- */
+function cubes(w){
+  if (!w) return '<div class="cubes"><span class="wnum">not rated</span></div>';
+  let html = '<div class="cubes">';
+  for (let i=1;i<=5;i++){
+    let cls = "cube";
+    if (w >= i) cls += " on";
+    else if (w >= i-0.5) cls += " half";
+    html += `<span class="${cls}"></span>`;
+  }
+  html += `<span class="wnum">${w.toFixed(2)} / 5</span></div>`;
+  return html;
+}
+function seats(g){
+  const cap = 8;
+  let html = '<div class="seats">';
+  const top = Math.min(g.mx, cap);
+  for (let n=g.mn;n<=top;n++){
+    let cls = "seat";
+    if (g.best && g.best.includes(n)) cls += " best";
+    else if (g.rec && g.rec.includes(n)) cls += " rec";
+    if (n === state.players) cls += " sel";
+    html += `<span class="${cls}">${n}</span>`;
+  }
+  if (g.mx > cap){
+    let cls = "seat";
+    if (g.best && g.best.some(x=>x>cap)) cls += " best";
+    else if (g.rec && g.rec.some(x=>x>cap)) cls += " rec";
+    if (state.players > cap) cls += " sel";
+    html += `<span class="${cls}">${cap}+</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+function whyLine(g){
+  const bits = [];
+  const f = fitOf(g);
+  if (f === "best") bits.push(`Best at ${state.players}`);
+  else if (f === "rec") bits.push(`Good at ${state.players}`);
+  else bits.push(`Seats ${state.players}`);
+  if (g.p === 0) bits.push("never played");
+  return bits.join(" \u00b7 ");
+}
+function timeText(t){ return t > 0 ? t + " min" : "\u2014"; }
+function rankText(rk){ return rk > 0 ? "#" + rk : "\u2014"; }
+
+function renderPicks(){
+  const el = $("picks");
+  if (!state.picks.length){
+    el.innerHTML = '<div class="empty"><b>No games match those filters.</b><br>Try widening the complexity range, lowering the minimum rating, or switching player-count fit to &ldquo;Any.&rdquo;</div>';
+    return;
+  }
+  el.innerHTML = state.picks.map((g,i)=>`
+    <div class="gcard${i===state.pickedIndex?' picked':''}" data-i="${i}">
+      <h3 class="gtitle">${esc(g.n)}${g.c?' <span class="coop-pill">Co-op</span>':''}${g.l?' <span class="legacy-pill">Legacy</span>':''}</h3>
+      <span class="why">${whyLine(g)}</span>
+      <div class="meter-label">Complexity</div>
+      ${cubes(g.w)}
+      <div class="meter-label">Plays well at</div>
+      ${seats(g)}
+      <div class="seat-legend">
+        <span><i style="background:#fadfd6;border:1px solid #f0c3b6"></i>Best</span>
+        <span><i style="background:#dff0e4;border:1px solid #bfe0ca"></i>Recommended</span>
+      </div>
+      <div class="stat-row">
+        <span><span class="k">BGG</span> ${g.r ? g.r.toFixed(1) : "\u2014"}</span>
+        <span><span class="k">Rank</span> ${rankText(g.rk)}</span>
+        <span><span class="k">Time</span> ${timeText(g.t)}</span>
+        <span><span class="k">Plays</span> ${g.p}</span>
+      </div>
+    </div>`).join("");
+}
+
+function renderList(){
+  const rows = matched();
+  // sort
+  const k = state.sortKey, dir = state.sortDir;
+  rows.sort((a,b)=>{
+    let av, bv;
+    if (k === "n"){ return a.n.toLowerCase().localeCompare(b.n.toLowerCase()) * dir; }
+    if (k === "players"){ av=a.mx; bv=b.mx; }
+    else if (k === "rk"){ av=a.rk||999999; bv=b.rk||999999; } // unranked last on asc
+    else { av=a[k]||0; bv=b[k]||0; }
+    return (av-bv)*dir;
+  });
+  $("listBody").innerHTML = rows.map(g=>{
+    const f = fitOf(g);
+    let tag = "";
+    if (f === "best") tag = '<span class="fit-tag best">best</span>';
+    else if (f === "rec") tag = '<span class="fit-tag rec">rec</span>';
+    const coopTag = g.c ? '<span class="fit-tag coop">co-op</span>' : '';
+    const legacyTag = g.l ? '<span class="fit-tag legacy">legacy</span>' : '';
+    return `<tr>
+      <td class="name">${esc(g.n)}${coopTag}${legacyTag}${tag}</td>
+      <td class="num">${g.mn===g.mx?g.mn:g.mn+"\u2013"+(g.mx>8?"8+":g.mx)}</td>
+      <td class="num">${g.t>0?g.t:"\u2014"}</td>
+      <td class="num">${g.w?g.w.toFixed(2):"\u2014"}</td>
+      <td class="num">${g.r?g.r.toFixed(1):"\u2014"}</td>
+      <td class="num">${g.rk>0?g.rk:"\u2014"}</td>
+      <td class="num">${g.p}</td>
+    </tr>`;
+  }).join("");
+  // header arrows
+  document.querySelectorAll("thead th").forEach(th=>{
+    const base = th.dataset.label || th.textContent.replace(/[\u2191\u2193]\s*$/,"").trim();
+    th.dataset.label = base;
+    th.innerHTML = base + (th.dataset.sort===k ? ` <span class="arrow">${dir===1?"\u2191":"\u2193"}</span>` : "");
+  });
+  const n = rows.length;
+  $("matchCount").innerHTML = `<b>${n}</b> game${n===1?"":"s"} match`;
+  $("listHint").textContent = n ? "click a column to sort" : "nothing matches yet";
+}
+
+function esc(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- refresh everything ---------- */
+function refresh(){ renderList(); deal(); }
+
+/* ---------- pick one animation ---------- */
+let flashTimer = null;
+function pickOne(){
+  if (!state.picks.length) return;
+  if (flashTimer) clearInterval(flashTimer);
+  const cards = [...document.querySelectorAll(".gcard")];
+  if (!cards.length) return;
+  cards.forEach(c=>c.classList.remove("picked"));
+  let ticks = 0;
+  const total = 12 + Math.floor(Math.random()*4);
+  flashTimer = setInterval(()=>{
+    cards.forEach(c=>c.classList.remove("flash"));
+    const idx = ticks % cards.length;
+    cards[idx].classList.add("flash");
+    ticks++;
+    if (ticks >= total){
+      clearInterval(flashTimer); flashTimer=null;
+      cards.forEach(c=>c.classList.remove("flash"));
+      const win = Math.floor(Math.random()*cards.length);
+      state.pickedIndex = win;
+      cards[win].classList.add("picked");
+    }
+  }, 80);
+}
+
+/* ---------- wire up controls ---------- */
+function setPlayers(n){
+  state.players = Math.max(1, Math.min(12, n));
+  $("playersNum").textContent = state.players;
+  $("playersVal").textContent = state.players;
+  refresh();
+}
+$("pMinus").onclick = ()=>setPlayers(state.players-1);
+$("pPlus").onclick  = ()=>setPlayers(state.players+1);
+
+$("fitSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+  state.fit = b.dataset.fit; refresh();
+});
+$("playedSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+  state.played = b.dataset.played; refresh();
+});
+$("coopSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+  state.coop = b.dataset.coop; refresh();
+});
+$("legacySeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+  state.legacy = b.dataset.legacy; refresh();
+});
+
+/* complexity dual range */
+function updW(){
+  let lo = parseFloat($("wMin").value), hi = parseFloat($("wMax").value);
+  if (lo > hi){ [lo,hi]=[hi,lo]; }
+  state.wMin = lo; state.wMax = hi;
+  const fill = $("wFill");
+  const pct = v => ((v-1)/4)*100;
+  fill.style.left = pct(lo)+"%";
+  fill.style.width = (pct(hi)-pct(lo))+"%";
+  $("wVal").textContent = lo.toFixed(1)+" \u2013 "+hi.toFixed(1);
+}
+$("wMin").addEventListener("input", ()=>{ updW(); refresh(); });
+$("wMax").addEventListener("input", ()=>{ updW(); refresh(); });
+
+/* min rating */
+function updR(){
+  const v = parseFloat($("rMin").value);
+  state.rMin = v;
+  $("rFill").style.left = "0%";
+  $("rFill").style.width = ((v/9)*100)+"%";
+  $("rVal").textContent = v <= 0 ? "Any" : v.toFixed(1)+"+";
+}
+$("rMin").addEventListener("input", ()=>{ updR(); refresh(); });
+
+/* max time */
+$("maxTime").addEventListener("input", ()=>{
+  const v = parseInt($("maxTime").value,10);
+  state.maxTime = (isNaN(v)||v<=0) ? null : v;
+  refresh();
+});
+$("timeClear").onclick = ()=>{ $("maxTime").value=""; state.maxTime=null; refresh(); };
+
+/* sorting */
+document.querySelectorAll("thead th").forEach(th=>{
+  th.addEventListener("click", ()=>{
+    const k = th.dataset.sort;
+    if (state.sortKey === k) state.sortDir *= -1;
+    else { state.sortKey = k; state.sortDir = (k==="n") ? 1 : (k==="rk" ? 1 : -1); }
+    renderList();
+  });
+});
+
+$("rollBtn").onclick = deal;
+$("pickOneBtn").onclick = pickOne;
+
+/* ---------- init ---------- */
+(function init(){
+  const owned = GAMES.length;
+  $("subline").textContent =
+    `${owned} standalone games from your collection. Set the table, then deal three picks - the roll leans toward titles that play best at your chosen count.`;
+  $("footStat").textContent = `${owned} games loaded`;
+  updW(); updR();
+  refresh();
+})();
+</script>
+</body>
+</html>
